@@ -6,7 +6,7 @@ pipeline {
   }
 
   environment {
-    SONAR_TOKEN = credentials('sonar-token') // Must be added in Jenkins credentials
+    SONAR_TOKEN = credentials('SONAR_TOKEN') // Must be added in Jenkins credentials
   }
 
   parameters {
