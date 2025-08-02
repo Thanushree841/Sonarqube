@@ -2,11 +2,11 @@ pipeline {
   agent any
 
   tools {
-    maven 'Maven 3.9.4' // Only declare valid tools like Maven, JDK, etc.
+    maven 'Maven 3.9.4' // Ensure this matches the name under Jenkins → Global Tool Configuration
   }
 
   environment {
-    SONAR_TOKEN = credentials('SONAR_TOKEN') // Must be added in Jenkins credentials
+    SONAR_TOKEN = credentials('SONAR_TOKEN') // Must be stored as 'Secret text' in Jenkins credentials
   }
 
   parameters {
@@ -29,17 +29,18 @@ pipeline {
       }
     }
 
-   stage('SonarQube Scan') {
-  steps {
-    withSonarQubeEnv('MySonar') {
-      sh '''
-        mvn clean verify sonar:sonar \
-          -Dsonar.projectKey=myproject \
-          -Dsonar.login=$SONAR_TOKEN
-      '''
+    stage('SonarQube Scan') {
+      steps {
+        withSonarQubeEnv('MySonar') {
+          sh '''
+            mvn clean verify sonar:sonar \
+              -Dsonar.projectKey=myproject \
+              -Dsonar.host.url=http://13.234.76.174:30910 \
+              -Dsonar.login=$SONAR_TOKEN
+          '''
+        }
+      }
     }
-  }
-}
 
     stage('Quality Gate') {
       steps {
@@ -66,3 +67,4 @@ pipeline {
     }
   }
 }
+
