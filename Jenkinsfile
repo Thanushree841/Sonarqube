@@ -29,19 +29,17 @@ pipeline {
       }
     }
 
-    stage('SonarQube Scan') {
-      steps {
-        withSonarQubeEnv('MySonar') {
-          sh '''
-            #!/bin/bash
-            sonar-scanner \
-              -Dsonar.projectKey=myproject \
-              -Dsonar.sources=. \
-              -Dsonar.login=$SONAR_TOKEN
-          '''
-        }
-      }
+   stage('SonarQube Scan') {
+  steps {
+    withSonarQubeEnv('MySonar') {
+      sh '''
+        mvn clean verify sonar:sonar \
+          -Dsonar.projectKey=myproject \
+          -Dsonar.login=$SONAR_TOKEN
+      '''
     }
+  }
+}
 
     stage('Quality Gate') {
       steps {
