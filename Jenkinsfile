@@ -8,7 +8,6 @@ pipeline {
   environment {
     SONAR_TOKEN        = credentials('SONAR_TOKEN')
     NEXUS_MAVEN        = credentials('NEXUS_MAVEN')
-    NEXUS_DOCKER       = credentials('NEXUS_DOCKER')  // not used directly, optional
     NEXUS_DOCKER_REPO  = 'http://13.127.83.102:5000/docker-dev'
     SONAR_HOST         = 'http://3.109.153.26:30900/'
   }
@@ -74,8 +73,12 @@ pipeline {
     stage('Deploy Artifact to Nexus') {
       steps {
         echo '📤 Uploading artifact to Nexus Maven repo...'
-        withCredentials([usernamePassword(credentialsId: 'NEXUS_MAVEN', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-          configFileProvider([configFile(fileId: 'c20a0ce7-4a99-4c4a-939a-747e59f9141b', targetLocation: 'settings.xml')]) {
+        withCredentials([
+          usernamePassword(credentialsId: 'NEXUS_MAVEN', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')
+        ]) {
+          configFileProvider([
+            configFile(fileId: 'c20a0ce7-4a99-4c4a-939a-747e59f9141b', targetLocation: 'settings.xml')
+          ]) {
             sh '''
               sed -i "s|<username>.*</username>|<username>${NEXUS_USER}</username>|" settings.xml
               sed -i "s|<password>.*</password>|<password>${NEXUS_PASS}</password>|" settings.xml
@@ -99,9 +102,9 @@ pipeline {
     stage('Push Docker Image to Nexus') {
       steps {
         echo '📦 Pushing Docker image to Nexus...'
-        withCredentials([usernamePassword(credentialsId: 'nexus-docker-creds', 
-                                          usernameVariable: 'NEXUS_DOCKER_USR', 
-                                          passwordVariable: 'NEXUS_DOCKER_PSW')]) {
+        withCredentials([
+          usernamePassword(credentialsId: 'nexus-docker-creds', usernameVariable: 'NEXUS_DOCKER_USR', passwordVariable: 'NEXUS_DOCKER_PSW')
+        ]) {
           script {
             def image = "${NEXUS_DOCKER_REPO.replace('http://', '')}/sonarqube-app:1.0.0-SNAPSHOT"
             sh """
