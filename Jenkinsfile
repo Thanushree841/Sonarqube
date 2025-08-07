@@ -103,7 +103,7 @@ pipeline {
       steps {
         echo '📦 Pushing Docker image to Nexus...'
         withCredentials([
-          usernamePassword(credentialsId: 'nexus-docker-creds', usernameVariable: 'NEXUS_DOCKER_USR', passwordVariable: 'NEXUS_DOCKER_PSW')
+          usernamePassword(credentialsId: 'NEXUS_DOCKER', usernameVariable: 'NEXUS_DOCKER_USR', passwordVariable: 'NEXUS_DOCKER_PSW')
         ]) {
           script {
             def image = "${NEXUS_DOCKER_REPO.replace('http://', '')}/sonarqube-app:1.0.0-SNAPSHOT"
