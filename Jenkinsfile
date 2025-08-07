@@ -117,7 +117,6 @@ pipeline {
       }
     }
   }
-
   post {
     success {
       echo '✅ Full CI/CD pipeline successful.'
