@@ -1,4 +1,4 @@
-FROM openjdk:21-slim
+FROM nexus.mycompany.com/openjdk:21-slim
 
 WORKDIR /app
 
