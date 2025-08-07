@@ -105,6 +105,8 @@ pipeline {
         withCredentials([
           usernamePassword(credentialsId: 'NEXUS_DOCKER', usernameVariable: 'NEXUS_DOCKER_USR', passwordVariable: 'NEXUS_DOCKER_PSW')
         ]) {
+          sh 'cat /etc/docker/daemon.json || echo "No daemon.json found"'
+           sh 'docker info'
           script {
             def image = "${NEXUS_DOCKER_REPO.replace('http://', '')}/sonarqube-app:1.0.0-SNAPSHOT"
             sh """
