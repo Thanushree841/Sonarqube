@@ -6,11 +6,11 @@ pipeline {
   }
 
   environment {
-    SONAR_TOKEN        = credentials('SONAR_TOKEN')        // Secret Text
-    NEXUS_MAVEN        = credentials('NEXUS_MAVEN')        // Username + Password
-    NEXUS_DOCKER       = credentials('NEXUS_DOCKER')       // Username + Password
-    NEXUS_DOCKER_REPO  = 'http://13.127.83.102:5000/docker-dev'   // ✅ Docker Registry
-    SONAR_HOST         = 'http://3.109.153.26:30900/'     // ✅ Updated SonarQube Host
+    SONAR_TOKEN        = credentials('SONAR_TOKEN')
+    NEXUS_MAVEN        = credentials('NEXUS_MAVEN')
+    NEXUS_DOCKER       = credentials('NEXUS_DOCKER')  // not used directly, optional
+    NEXUS_DOCKER_REPO  = 'http://13.127.83.102:5000/docker-dev'
+    SONAR_HOST         = 'http://3.109.153.26:30900/'
   }
 
   parameters {
@@ -96,24 +96,20 @@ pipeline {
       }
     }
 
-    environment {
-  NEXUS_DOCKER_REPO = 'http://13.127.83.102:5000'
-}
-
-stages {
-  stage('Push Docker Image to Nexus') {
-    steps {
-      echo '📦 Pushing Docker image to Nexus...'
-      withCredentials([usernamePassword(credentialsId: 'nexus-docker-creds', 
-                                        usernameVariable: 'NEXUS_DOCKER_USR', 
-                                        passwordVariable: 'NEXUS_DOCKER_PSW')]) {
-        script {
-          def image = "${NEXUS_DOCKER_REPO.replace('http://', '')}/sonarqube-app:1.0.0-SNAPSHOT"
-          sh """
-            echo "$NEXUS_DOCKER_PSW" | docker login 13.127.83.102:5000 -u "$NEXUS_DOCKER_USR" --password-stdin
-            docker push ${image}
-            docker logout 13.127.83.102:5000
-          """
+    stage('Push Docker Image to Nexus') {
+      steps {
+        echo '📦 Pushing Docker image to Nexus...'
+        withCredentials([usernamePassword(credentialsId: 'nexus-docker-creds', 
+                                          usernameVariable: 'NEXUS_DOCKER_USR', 
+                                          passwordVariable: 'NEXUS_DOCKER_PSW')]) {
+          script {
+            def image = "${NEXUS_DOCKER_REPO.replace('http://', '')}/sonarqube-app:1.0.0-SNAPSHOT"
+            sh """
+              echo "$NEXUS_DOCKER_PSW" | docker login 13.127.83.102:5000 -u "$NEXUS_DOCKER_USR" --password-stdin
+              docker push ${image}
+              docker logout 13.127.83.102:5000
+            """
+          }
         }
       }
     }
