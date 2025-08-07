@@ -118,7 +118,7 @@ stages {
       }
     }
   }
-}
+
   post {
     success {
       echo '✅ Full CI/CD pipeline successful.'
