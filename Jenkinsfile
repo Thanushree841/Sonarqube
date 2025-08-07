@@ -90,7 +90,7 @@ pipeline {
       steps {
         echo '🐳 Building Docker image...'
         script {
-          def image = "${NEXUS_DOCKER_REPO}/sonarqube-app:1.0.0-SNAPSHOT"
+          def image = "${NEXUS_DOCKER_REPO.replace('http://', '')}/sonarqube-app:1.0.0-SNAPSHOT"
           sh "docker build -t ${image} ."
         }
       }
@@ -100,7 +100,7 @@ pipeline {
       steps {
         echo '📦 Pushing Docker image to Nexus...'
         script {
-          def image = "${NEXUS_DOCKER_REPO}/sonarqube-app:1.0.0-SNAPSHOT"
+          def image = "${NEXUS_DOCKER_REPO.replace('http://', '')}/sonarqube-app:1.0.0-SNAPSHOT"
           sh """
             echo "$NEXUS_DOCKER_PSW" | docker login 13.127.83.102:5000 -u "$NEXUS_DOCKER_USR" --password-stdin
             docker push ${image}
