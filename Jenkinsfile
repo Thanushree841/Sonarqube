@@ -102,7 +102,7 @@ pipeline {
         script {
           def image = "${NEXUS_DOCKER_REPO.replace('http://', '')}/sonarqube-app:1.0.0-SNAPSHOT"
           sh """
-            echo "$NEXUS_DOCKER" | docker login 13.127.83.102:5000 -u "$NEXUS_DOCKER_USR" --password-stdin
+            echo "$NEXUS_DOCKER_PSW" | docker login 13.127.83.102:5000 -u "$NEXUS_DOCKER_USR" --password-stdin
             docker push ${image}
             docker logout 13.127.83.102:5000
           """
