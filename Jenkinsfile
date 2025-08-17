@@ -6,10 +6,11 @@ pipeline {
   }
 
   environment {
-    SONAR_TOKEN        = credentials('SONAR_TOKEN')
-    NEXUS_MAVEN        = credentials('NEXUS_MAVEN')
-    NEXUS_DOCKER_REPO  = 'http://13.127.83.102:5000/docker-dev'
-    SONAR_HOST         = 'http://3.109.153.26:30900/'
+    SONAR_TOKEN        = credentials('SONAR_TOKEN')        // Secret Text
+    NEXUS_MAVEN        = credentials('NEXUS_MAVEN')        // Username + Password
+    NEXUS_DOCKER       = credentials('NEXUS_DOCKER')       // Username + Password
+    NEXUS_DOCKER_REPO  = '3.6.37.144:5000/docker-dev'      // ✅ Docker Registry
+    SONARQUBE_SERVER   = 'http://13.201.223.85:30900'      // ✅ Updated SonarQube Host
   }
 
   parameters {
@@ -36,18 +37,21 @@ pipeline {
     stage('Check SonarQube') {
       steps {
         echo '🔍 Verifying SonarQube server availability...'
-        sh 'curl -s --fail $SONAR_HOST/ > /dev/null || { echo "❌ SonarQube is not reachable!"; exit 1; }'
+        sh 'curl -s --fail $SONARQUBE_SERVER/ > /dev/null || { echo " SonarQube is not reachable!"; exit 1; }'
       }
     }
 
-    stage('SonarQube Scan') {
+    stage('SonarQube Analysis') {
       steps {
-        echo '🚀 Running SonarQube Scan...'
-        withSonarQubeEnv('MySonar') {
+        withCredentials([string(credentialsId: 'sonar-scanner', variable: 'token')]) {
+          echo "🚀 Running SonarQube analysis..."
           sh '''
             mvn clean verify sonar:sonar \
-              -Dsonar.projectKey=myproject \
-              -Dsonar.login=$SONAR_TOKEN
+              -Dsonar.projectKey=sonar-analysis \
+              -Dsonar.projectName=sonar-analysis \
+              -Dsonar.host.url=${SONARQUBE_SERVER} \
+              -Dsonar.token=$token \
+              -Dsonar.projectVersion=${BUILD_NUMBER}
           '''
         }
       }
@@ -66,25 +70,15 @@ pipeline {
       steps {
         echo '📦 Building project and generating artifact...'
         sh 'mvn clean package'
-        archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
       }
     }
 
     stage('Deploy Artifact to Nexus') {
       steps {
         echo '📤 Uploading artifact to Nexus Maven repo...'
-        withCredentials([
-          usernamePassword(credentialsId: 'NEXUS_MAVEN', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')
-        ]) {
-          configFileProvider([
-            configFile(fileId: 'c20a0ce7-4a99-4c4a-939a-747e59f9141b', targetLocation: 'settings.xml')
-          ]) {
-            sh '''
-              sed -i "s|<username>.*</username>|<username>${NEXUS_USER}</username>|" settings.xml
-              sed -i "s|<password>.*</password>|<password>${NEXUS_PASS}</password>|" settings.xml
-              mvn deploy -s settings.xml -DskipTests
-            '''
-          }
+        configFileProvider([configFile(fileId: '63f74aca-dc42-4dd8-98e0-f61960f5fc24', targetLocation: 'settings.xml')]) {
+          sh 'mvn deploy -s settings.xml -DskipTests'
         }
       }
     }
@@ -93,7 +87,7 @@ pipeline {
       steps {
         echo '🐳 Building Docker image...'
         script {
-          def image = "${NEXUS_DOCKER_REPO.replace('http://', '')}/sonarqube-app:1.0.0-SNAPSHOT"
+          def image = "${NEXUS_DOCKER_REPO}/sonarqube-app:1.0.0-SNAPSHOT"
           sh "docker build -t ${image} ."
         }
       }
@@ -102,29 +96,24 @@ pipeline {
     stage('Push Docker Image to Nexus') {
       steps {
         echo '📦 Pushing Docker image to Nexus...'
-        withCredentials([
-          usernamePassword(credentialsId: 'NEXUS_DOCKER', usernameVariable: 'NEXUS_DOCKER_USR', passwordVariable: 'NEXUS_DOCKER_PSW')
-        ]) {
-          sh 'cat /etc/docker/daemon.json || echo "No daemon.json found"'
-           sh 'docker info'
-          script {
-            def image = "${NEXUS_DOCKER_REPO.replace('http://', '')}/sonarqube-app:1.0.0-SNAPSHOT"
-            sh """
-              echo "$NEXUS_DOCKER_PSW" | docker login 13.127.83.102:5000 -u "$NEXUS_DOCKER_USR" --password-stdin
-              docker push ${image}
-              docker logout 13.127.83.102:5000
-            """
-          }
+        script {
+          def image = "${NEXUS_DOCKER_REPO}/sonarqube-app:1.0.0-SNAPSHOT"
+          sh """
+            echo "$NEXUS_DOCKER_PSW" | docker login 3.6.37.144:5000 -u "$NEXUS_DOCKER_USR" --password-stdin
+            docker push ${image}
+            docker logout 3.6.37.144:5000
+          """
         }
       }
     }
   }
+
   post {
     success {
-      echo '✅ Full CI/CD pipeline successful.'
+      echo ' Full CI/CD pipeline successful.'
     }
     failure {
-      echo '❌ Pipeline failed.'
+      echo ' Pipeline failed.'
     }
   }
 }
