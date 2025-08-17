@@ -9,8 +9,8 @@ pipeline {
     SONAR_TOKEN        = credentials('SONAR_TOKEN')        // Secret Text
     NEXUS_MAVEN        = credentials('NEXUS_MAVEN')        // Username + Password
     NEXUS_DOCKER       = credentials('NEXUS_DOCKER')       // Username + Password
-    NEXUS_DOCKER_REPO  = '3.110.215.133:5000/docker-dev'   // ✅ Docker Registry
-    SONAR_HOST         = 'http://13.234.186.239:30201'     // ✅ Updated SonarQube Host
+    NEXUS_DOCKER_REPO  = '3.6.37.144:5000/docker-dev'   // ✅ Docker Registry
+    SONAR_HOST         = 'http://13.201.223.85:30900'     // ✅ Updated SonarQube Host
   }
 
   parameters {
@@ -37,7 +37,7 @@ pipeline {
     stage('Check SonarQube') {
       steps {
         echo '🔍 Verifying SonarQube server availability...'
-        sh 'curl -s --fail $SONAR_HOST/ > /dev/null || { echo "❌ SonarQube is not reachable!"; exit 1; }'
+        sh 'curl -s --fail $SONAR_HOST/ > /dev/null || { echo " SonarQube is not reachable!"; exit 1; }'
       }
     }
 
@@ -96,9 +96,9 @@ pipeline {
         script {
           def image = "${NEXUS_DOCKER_REPO}/sonarqube-app:1.0.0-SNAPSHOT"
           sh """
-            echo "$NEXUS_DOCKER_PSW" | docker login 3.110.215.133:5000 -u "$NEXUS_DOCKER_USR" --password-stdin
+            echo "$NEXUS_DOCKER_PSW" | docker login 3.6.37.144:5000 -u "$NEXUS_DOCKER_USR" --password-stdin
             docker push ${image}
-            docker logout 3.110.215.133:5000
+            docker logout 3.6.37.144:5000
           """
         }
       }
@@ -107,10 +107,10 @@ pipeline {
 
   post {
     success {
-      echo '✅ Full CI/CD pipeline successful.'
+      echo ' Full CI/CD pipeline successful.'
     }
     failure {
-      echo '❌ Pipeline failed.'
+      echo ' Pipeline failed.'
     }
   }
 }
