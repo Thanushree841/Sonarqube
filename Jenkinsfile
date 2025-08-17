@@ -45,6 +45,8 @@ pipeline {
       steps {
         withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'token')]) {
           echo "🚀 Running SonarQube analysis..."
+           withSonarQubeEnv('MySonar') {
+
           sh '''
             mvn clean verify sonar:sonar \
               -Dsonar.projectKey=sonar-analysis \
@@ -55,6 +57,7 @@ pipeline {
           '''
         }
       }
+    }
     }
 
     stage('Quality Gate') {
