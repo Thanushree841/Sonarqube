@@ -17,12 +17,12 @@
     <repository>
       <id>nexus-release</id>
       <name>Nexus Release Repo</name>
-      <url>http://3.110.215.133:8081/repository/maven_releases/</url>
+      <url>http://3.6.37.144:8081/repository/maven_releases/</url>
     </repository>
     <snapshotRepository>
       <id>nexus-snapshot</id>
       <name>Nexus Snapshot Repo</name>
-      <url>http://3.110.215.133:8081/repository/maven_snapshots/</url>
+      <url>http://3.6.37.144:8081/repository/maven_snapshots/</url>
     </snapshotRepository>
   </distributionManagement>
 
