@@ -9,12 +9,12 @@ pipeline {
     SONAR_TOKEN        = credentials('SONAR_TOKEN')        // Secret Text
     NEXUS_MAVEN        = credentials('NEXUS_MAVEN')        // Username + Password
     NEXUS_DOCKER       = credentials('NEXUS_DOCKER')       // Username + Password
-    NEXUS_DOCKER_REPO  = '3.6.37.144:5000/docker-dev'   // ✅ Docker Registry
-    SONAR_HOST         = 'http://13.201.223.85:30900'     // ✅ Updated SonarQube Host
+    NEXUS_DOCKER_REPO  = '3.6.37.144:5000/docker-dev'      // ✅ Docker Registry
+    SONARQUBE_SERVER   = 'http://13.201.223.85:30900'      // ✅ Updated SonarQube Host
   }
 
   parameters {
-    string(name: 'BRANCH_NAME', defaultValue: 'Vidyashri.developer', description: 'Git branch to build')
+    string(name: 'BRANCH_NAME', defaultValue: 'thanu.developer', description: 'Git branch to build')
   }
 
   triggers {
@@ -29,7 +29,7 @@ pipeline {
         checkout([
           $class: 'GitSCM',
           branches: [[name: "*/${params.BRANCH_NAME}"]],
-          userRemoteConfigs: [[url: 'https://github.com/Shri19-web/SonarQube.git']]
+          userRemoteConfigs: [[url: 'https://github.com/Thanushree841/Sonarqube.git']]
         ])
       }
     }
@@ -37,18 +37,21 @@ pipeline {
     stage('Check SonarQube') {
       steps {
         echo '🔍 Verifying SonarQube server availability...'
-        sh 'curl -s --fail $SONAR_HOST/ > /dev/null || { echo " SonarQube is not reachable!"; exit 1; }'
+        sh 'curl -s --fail $SONARQUBE_SERVER/ > /dev/null || { echo " SonarQube is not reachable!"; exit 1; }'
       }
     }
 
-    stage('SonarQube Scan') {
+    stage('SonarQube Analysis') {
       steps {
-        echo '🚀 Running SonarQube Scan...'
-        withSonarQubeEnv('MySonar') {
+        withCredentials([string(credentialsId: 'sonar-scanner', variable: 'token')]) {
+          echo "🚀 Running SonarQube analysis..."
           sh '''
             mvn clean verify sonar:sonar \
-              -Dsonar.projectKey=myproject \
-              -Dsonar.login=$SONAR_TOKEN
+              -Dsonar.projectKey=sonar-analysis \
+              -Dsonar.projectName=sonar-analysis \
+              -Dsonar.host.url=${SONARQUBE_SERVER} \
+              -Dsonar.token=$token \
+              -Dsonar.projectVersion=${BUILD_NUMBER}
           '''
         }
       }
@@ -67,7 +70,7 @@ pipeline {
       steps {
         echo '📦 Building project and generating artifact...'
         sh 'mvn clean package'
-        archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
       }
     }
 
